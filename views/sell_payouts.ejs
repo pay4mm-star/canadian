@@ -1,0 +1,41 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <div class="rowhead"><h1>Payouts</h1><a class="btn" href="/sell/hub">Seller hub</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="small muted">On hold</span><b class="num"><%= money(balance.held) %></b></div>
+    <div class="tile"><span class="small muted">Available for next payout</span><b class="num"><%= money(balance.available) %></b></div>
+    <div class="tile"><span class="small muted">Frozen by open cases</span><b class="num"><%= money(balance.frozen) %></b></div>
+    <div class="tile"><span class="small muted">Paid out to date</span><b class="num"><%= money(balance.paidOut) %></b></div>
+  </div>
+  <div class="half" style="margin-top:22px">
+    <form method="post" action="/sell/payouts" class="panel stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+      <h3>Payout settings</h3>
+      <label class="f" for="schedule">Payout schedule<select id="schedule" name="schedule"><% [['daily', 'Every day'], ['weekly', 'Every week (Tuesdays)'], ['biweekly', 'Every two weeks (Tuesdays)'], ['monthly', 'Once a month (the 1st)']].forEach(s => { %><option value="<%= s[0] %>"<%= seller.payout_schedule === s[0] ? ' selected' : '' %>><%= s[1] %></option><% }) %></select></label>
+      <label class="f" for="payout_details">Interac e-Transfer email for payouts<input id="payout_details" name="payout_details" type="email" maxlength="120" value="<%= seller.payout_details || '' %>"><small>Used when payouts are sent by e-Transfer. Never enter a bank account number here.</small></label>
+      <button class="btn primary" type="submit">Save payout settings</button>
+    </form>
+    <div class="panel stack">
+      <h3>How your money moves</h3>
+      <p class="small">Buyers pay Canado. We deduct the <%= feePct %>% fee and hold the rest for you.</p>
+      <p class="small"><% if (isNew) { %>You are a new seller (fewer than <%= cfg.newSellerSales %> completed sales). Funds are released when the buyer confirms delivery, or <%= cfg.newSellerHoldDays %> days after you add tracking, whichever is first.<% } else { %>Funds are released <%= cfg.holdDays %> days after the buyer pays.<% } %> Released funds go out on your payout schedule.</p>
+      <% if (stripeOn) { %>
+        <% if (seller.stripe_ready) { %><p class="small"><span class="tag good">Bank connected</span> Payouts are deposited to your Canadian bank account.</p>
+        <% } else { %><form method="post" action="/sell/payouts/connect"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn" type="submit">Connect your Canadian bank account</button></form><p class="small muted">Identity and bank details are verified by Stripe. Canado never sees your account number.</p><% } %>
+      <% } else { %><p class="small muted">Direct bank deposit is not switched on yet. Payouts are sent by Interac e-Transfer.</p><% } %>
+    </div>
+  </div>
+
+  <h2 style="margin:26px 0 12px">Payout history</h2>
+  <% if (payouts.length) { %><div class="tablewrap"><table><thead><tr><th>Payout</th><th>Created</th><th class="right">Amount</th><th>Method</th><th>Status</th><th>Reference</th></tr></thead><tbody>
+    <% payouts.forEach(p => { %><tr><td class="mono">#<%= p.id %></td><td><%= date(p.created_at) %></td><td class="right num"><%= money(p.amount_cents) %></td><td><%= p.method === 'stripe' ? 'Bank deposit' : 'e-Transfer' %></td><td><span class="tag <%= p.status === 'sent' ? 'good' : 'warn' %>"><%= p.status === 'sent' ? 'Sent ' + date(p.sent_at) : 'Processing' %></span></td><td class="small mono"><%= p.status === 'sent' ? (p.reference || '') : '' %></td></tr><% }) %>
+  </tbody></table></div><% } else { %><div class="empty">No payouts yet.</div><% } %>
+
+  <h2 style="margin:26px 0 12px">Sales and fees</h2>
+  <% if (orders.length) { %><div class="tablewrap"><table><thead><tr><th>Order</th><th>Item</th><th class="right">Sale + shipping</th><th class="right">Tax to you</th><th class="right">Fee</th><th class="right">You receive</th><th>Funds</th></tr></thead><tbody>
+    <% orders.forEach(o => { %><tr><td class="mono"><a href="/orders/<%= o.id %>">#<%= o.id %></a></td><td><%= o.title %></td><td class="right num"><%= money(o.item_cents + o.ship_cents) %></td><td class="right num"><%= o.tax_remitter === 'seller' ? money(o.tax_cents) : '—' %></td><td class="right num">− <%= money(o.fee_cents) %></td><td class="right num"><b><%= money(o.net_cents) %></b></td>
+      <td class="small"><%= FUNDS[o.funds_status] %><% if (o.funds_status === 'held') { %><div class="muted"><%= o.available_at ? 'until ' + date(o.available_at) : 'until shipped' %></div><% } %><% if (o.payout_id) { %><div class="muted mono">payout #<%= o.payout_id %></div><% } %></td></tr><% }) %>
+  </tbody></table></div><% } else { %><div class="empty">Paid orders appear here with the fee and what you receive.</div><% } %>
+
+  <% if (adjustments.length) { %><h2 style="margin:26px 0 12px">Adjustments</h2><div class="tablewrap"><table><tbody><% adjustments.forEach(x => { %><tr><td><%= date(x.created_at) %></td><td><%= x.reason %></td><td class="right num"><%= money(x.amount_cents) %></td><td class="small muted"><%= x.payout_id ? 'Applied to payout #' + x.payout_id : 'Will come off your next payout' %></td></tr><% }) %></tbody></table></div><% } %>
+</section></div>
+<%- include('partials/foot') %>

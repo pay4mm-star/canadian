@@ -1,0 +1,21 @@
+<%- include('partials/head') %>
+<div class="wrap mid"><section>
+<% if (!other) { %>
+  <h1>Messages</h1>
+  <% if (threads.length) { %><div class="tablewrap" style="margin-top:16px"><table><tbody><% threads.forEach(t => { const uid = t.from_id === user.id ? t.to_id : t.from_id; %><tr><td><a href="/messages/<%= uid %>"><b><%= t.shop_name || t.name %></b></a><% if (t.unread) { %><span class="count"><%= t.unread %></span><% } %><div class="small muted"><%= t.from_id === user.id ? 'You: ' : '' %><%= t.body.slice(0, 120) %></div></td><td class="small muted right" style="white-space:nowrap"><%= dateTime(t.created_at) %></td></tr><% }) %></tbody></table></div>
+  <% } else { %><div class="empty" style="margin-top:16px">No messages yet. Ask a seller a question from any listing.</div><% } %>
+<% } else { %>
+  <p class="small"><a href="/messages">All messages</a></p>
+  <h1 style="margin-top:6px"><%= other.shop_name || other.name %></h1>
+  <div class="stack" style="margin:18px 0">
+    <% thread.forEach(m => { %><div class="bubble <%= m.from_id === user.id ? 'me' : '' %>"><% if (m.item_title) { %><div class="small" style="opacity:.75">About: <%= m.item_title %></div><% } %><%= m.body %><div class="small" style="opacity:.7;margin-top:4px"><%= dateTime(m.created_at) %></div></div><% }) %>
+    <% if (!thread.length) { %><p class="muted">No messages with this member yet.</p><% } %>
+  </div>
+  <form method="post" action="/messages/<%= other.id %>" class="panel stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+    <% if (item) { %><input type="hidden" name="item" value="<%= item.id %>"><p class="small muted">About: <%= item.title %></p><% } %>
+    <label class="f" for="body">Your message<textarea id="body" name="body" rows="3" required maxlength="2000"></textarea></label>
+    <p class="small muted">Keep payment on Canado. Never send money outside the site.</p>
+    <button class="btn primary" type="submit">Send message</button></form>
+<% } %>
+</section></div>
+<%- include('partials/foot') %>

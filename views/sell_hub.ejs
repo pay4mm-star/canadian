@@ -1,0 +1,35 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <div class="rowhead"><h1>Seller hub</h1><div class="row"><a class="btn" href="/sell/import">Import from eBay</a><a class="btn primary" href="/sell/new">Create a listing</a></div></div>
+  <div class="tiles">
+    <div class="tile"><span class="small muted">Orders to ship</span><b class="num"><%= toShip %></b><a class="small" href="/sell/hub?tab=orders">View orders</a></div>
+    <div class="tile"><span class="small muted">On hold</span><b class="num"><%= money(balance.held) %></b><span class="small muted">Released after shipping</span></div>
+    <div class="tile"><span class="small muted">Available for payout</span><b class="num"><%= money(balance.available) %></b><a class="small" href="/sell/payouts">Payouts</a></div>
+    <div class="tile"><span class="small muted">Paid out to date</span><b class="num"><%= money(balance.paidOut) %></b><span class="small muted"><%= stats.sales %> completed sale<%= stats.sales === 1 ? '' : 's' %></span></div>
+  </div>
+  <div class="tabs" style="margin-top:22px"><% [['active', 'Active listings'], ['orders', 'Orders'], ['offers', 'Offers' + (pendingOffers ? ' (' + pendingOffers + ')' : '')], ['ended', 'Ended']].forEach(t => { %><a class="chip <%= tab === t[0] ? 'on' : '' %>" href="/sell/hub?tab=<%= t[0] %>"><%= t[1] %></a><% }) %></div>
+
+  <% if (tab === 'active' || tab === 'ended') { %>
+    <% if (listings.length) { %><div class="tablewrap"><table><thead><tr><th>Listing</th><th>Format</th><th class="right">Price</th><th class="right">Bids / sold</th><th class="right">Views</th><th><%= tab === 'active' ? 'Ends' : 'Status' %></th><th></th></tr></thead><tbody>
+      <% listings.forEach(l => { %><tr><td><a href="/item/<%= l.id %>"><%= l.title %></a></td><td><%= l.format === 'auction' ? 'Auction' : 'Buy It Now' %></td><td class="right num"><%= money(l.current_cents) %></td>
+        <td class="right num"><%= l.format === 'auction' ? l.bid_count + ' bids' : l.sold_qty + ' of ' + l.quantity %></td><td class="right num"><%= l.views %><% if (l.watchers) { %> · <%= l.watchers %> watching<% } %></td>
+        <td class="num"><%= tab === 'active' ? (l.ends_at ? timeLeft(l.ends_at) : 'Until sold') : l.status %></td>
+        <td class="right" style="white-space:nowrap"><% if (tab === 'active') { %><a class="btn sm" href="/sell/edit/<%= l.id %>">Edit</a> <form method="post" action="/sell/end/<%= l.id %>"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">End</button></form>
+          <% } else if (l.status !== 'removed') { %><form method="post" action="/sell/relist/<%= l.id %>"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Relist</button></form><% } %></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty"><%= tab === 'active' ? 'You have no active listings.' : 'Nothing here yet.' %> <a href="/sell/new">Create a listing</a></div><% } %>
+
+  <% } else if (tab === 'orders') { %>
+    <% if (orders.length) { %><div class="tablewrap"><table><thead><tr><th>Order</th><th>Item</th><th>Buyer</th><th class="right">You receive</th><th>Status</th><th>Funds</th><th></th></tr></thead><tbody>
+      <% orders.forEach(o => { %><tr><td class="mono">#<%= o.id %><div class="small muted"><%= date(o.created_at) %></div></td><td><a href="/orders/<%= o.id %>"><%= o.title %></a></td><td><%= o.buyer_name %><% if (o.ship_country) { %><div class="small muted"><%= COUNTRIES[o.ship_country] %></div><% } %></td>
+        <td class="right num"><%= o.status === 'awaiting_payment' ? '—' : money(o.net_cents) %></td><td><span class="tag <%= o.status === 'paid' ? 'warn' : ['cancelled', 'refunded', 'awaiting_payment'].includes(o.status) ? 'plain' : 'good' %>"><%= STATUS[o.status] %></span></td><td class="small"><%= FUNDS[o.funds_status] %></td>
+        <td class="right"><a class="btn sm <%= o.status === 'paid' ? 'primary' : '' %>" href="/orders/<%= o.id %>"><%= o.status === 'paid' ? 'Ship now' : 'View' %></a></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty">No orders yet.</div><% } %>
+
+  <% } else { %>
+    <% if (offers.length) { %><div class="tablewrap"><table><thead><tr><th>Listing</th><th>Buyer</th><th class="right">Asking</th><th class="right">Offer</th><th>Status</th><th></th></tr></thead><tbody>
+      <% offers.forEach(o => { %><tr><td><a href="/item/<%= o.listing_id %>"><%= o.title %></a></td><td><%= o.buyer_name %></td><td class="right num"><%= money(o.price_cents) %></td><td class="right num"><b><%= money(o.amount_cents) %></b></td><td><span class="tag <%= o.status === 'pending' ? 'warn' : o.status === 'accepted' ? 'good' : 'plain' %>"><%= o.status %></span></td>
+        <td class="right" style="white-space:nowrap"><% if (o.status === 'pending') { %><form method="post" action="/sell/offers/<%= o.id %>/accept"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm primary" type="submit">Accept</button></form> <form method="post" action="/sell/offers/<%= o.id %>/decline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Decline</button></form><% } %></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty">No offers yet. Turn on "Accept offers" when you list an item.</div><% } %>
+  <% } %>
+</section></div>
+<%- include('partials/foot') %>

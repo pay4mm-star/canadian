@@ -1,0 +1,18 @@
+<%- include('partials/head') %>
+<div class="wrap mid"><section>
+  <h1>Import listings from eBay</h1>
+  <p class="muted" style="margin-top:8px">Upload a CSV export of your eBay listings. Each row becomes a live Buy It Now listing on Canado that you can edit.</p>
+  <% if (result && result.error) { %><div class="flash bad" role="alert"><%= result.error %></div><% } %>
+  <% if (result && !result.error) { %><div class="flash good"><%= result.made %> listing<%= result.made === 1 ? '' : 's' %> created.<% if (result.skipped.length) { %> <%= result.skipped.length + result.more %> row<%= result.skipped.length + result.more === 1 ? '' : 's' %> skipped.<% } %> <a href="/sell/hub">Review them in your seller hub</a></div>
+    <% if (result.skipped.length) { %><ul class="small muted"><% result.skipped.forEach(s => { %><li><%= s %></li><% }) %><% if (result.more) { %><li>and <%= result.more %> more</li><% } %></ul><% } %><% } %>
+  <form method="post" enctype="multipart/form-data" action="/sell/import?_csrf=<%= csrf %>" class="panel stack" style="margin-top:18px">
+    <label class="f" for="file">CSV file<input id="file" name="file" type="file" accept=".csv,text/csv" required><small>Up to 2,000 rows and 2 MB.</small></label>
+    <button class="btn primary" type="submit">Import listings</button>
+  </form>
+  <div class="prose" style="margin-top:22px">
+    <h2>What the file needs</h2>
+    <p>A header row with a <b>Title</b> column and a price column (<b>Start price</b>, <b>Current price</b> or <b>Price</b>). <b>Quantity</b>, <b>Condition</b> and <b>Description</b> are used when present.</p>
+    <p>Imported listings start in the "Everything else" category with a packed weight of 0.5 kg and Canada Post calculated shipping. Photos are not in the CSV, so add them when you edit each listing, along with the right category and weight.</p>
+  </div>
+</section></div>
+<%- include('partials/foot') %>

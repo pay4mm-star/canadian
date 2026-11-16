@@ -1,0 +1,51 @@
+<%- include('partials/head') %>
+<% const v = (k, d = '') => l[k] != null ? l[k] : d; %>
+<div class="wrap mid"><section>
+  <h1><%= title %></h1>
+  <% if (typeof error !== 'undefined' && error) { %><div class="flash bad" role="alert"><%= error %></div><% } %>
+  <form method="post" enctype="multipart/form-data" action="<%= editing ? '/sell/edit/' + l.id : '/sell/new' %>?_csrf=<%= csrf %>" class="stack" style="margin-top:18px">
+    <fieldset class="form"><legend>The item</legend>
+      <label class="f wide" for="title">Title<input id="title" name="title" required minlength="5" maxlength="80" value="<%= v('title') %>"><small>Up to 80 characters. Include the brand, model and size.</small></label>
+      <label class="f" for="category">Category<select id="category" name="category" required><option value="">Choose</option><% Object.entries(CATEGORIES).forEach(([k, n]) => { %><option value="<%= k %>"<%= l.category === k ? ' selected' : '' %>><%= n %></option><% }) %></select></label>
+      <label class="f" for="condition">Condition<select id="condition" name="condition" required><% CONDITIONS.forEach(c => { %><option<%= l.condition === c ? ' selected' : '' %>><%= c %></option><% }) %></select></label>
+      <label class="f wide" for="description">Description<textarea id="description" name="description" rows="7" maxlength="8000"><%= v('description') %></textarea></label>
+      <% if (photos.length) { %><div class="wide"><p class="small" style="font-weight:600;margin-bottom:6px">Current photos (tick to remove)</p><div class="row"><% photos.forEach(p => { %><label class="check" for="rp<%= p.id %>"><input id="rp<%= p.id %>" type="checkbox" name="remove_photo" value="<%= p.id %>"><img src="/uploads/<%= p.file %>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px"></label><% }) %></div></div><% } %>
+      <label class="f wide" for="photos"><%= photos.length ? 'Add photos' : 'Photos' %><input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Up to 8 photos, JPEG, PNG or WebP, 5 MB each. The first is the main photo.</small></label>
+    </fieldset>
+
+    <fieldset class="form"><legend>Price</legend>
+      <% if (editing) { %><p class="wide small muted">Format: <b><%= l.format === 'auction' ? 'Auction' : 'Buy It Now (fixed price)' %></b></p><input type="hidden" id="format" value="<%= l.format %>">
+      <% } else { %><label class="f wide" for="format">Format<select id="format" name="format"><option value="fixed"<%= l.format !== 'auction' ? ' selected' : '' %>>Buy It Now (fixed price, listed until sold)</option><option value="auction"<%= l.format === 'auction' ? ' selected' : '' %>>Auction</option></select></label><% } %>
+      <label class="f" for="price"><span data-format="fixed">Price (CAD)</span><span data-format="auction">Starting bid (CAD)</span><input id="price" name="price" required inputmode="decimal" value="<%= v('price') %>"></label>
+      <label class="f" for="quantity" data-format="fixed">Quantity<input id="quantity" name="quantity" type="number" min="1" max="9999" value="<%= v('quantity', 1) %>"></label>
+      <% if (!editing) { %><label class="f" for="duration" data-format="auction">Duration<select id="duration" name="duration"><% [1, 3, 5, 7, 10].forEach(d => { %><option value="<%= d %>"<%= +v('duration', 7) === d ? ' selected' : '' %>><%= d %> day<%= d === 1 ? '' : 's' %></option><% }) %></select></label><% } %>
+      <label class="f" for="bin" data-format="auction">Buy It Now price (optional)<input id="bin" name="bin" inputmode="decimal" value="<%= v('bin') %>"><small>Disappears after the first bid.</small></label>
+      <label class="f" for="reserve" data-format="auction">Reserve price (optional)<input id="reserve" name="reserve" inputmode="decimal" value="<%= v('reserve') %>"><small>The item does not sell below this.</small></label>
+      <label class="check wide" for="allow_offers"><input id="allow_offers" name="allow_offers" type="checkbox"<%= l.allow_offers ? ' checked' : '' %>>Accept offers from buyers</label>
+      <p class="wide small muted">You pay <%= feePct %>% of the sale price<%= cfg.feeOnShipping ? ' and shipping' : '' %> when it sells. Listing is free.</p>
+    </fieldset>
+
+    <fieldset class="form"><legend>Shipping with Canada Post</legend>
+      <label class="f" for="weight_kg">Packed weight (kg)<input id="weight_kg" name="weight_kg" required inputmode="decimal" value="<%= v('weight_kg') %>" placeholder="0.5"></label>
+      <label class="f" for="handling_days">Handling time (business days)<input id="handling_days" name="handling_days" type="number" min="1" max="10" value="<%= v('handling_days', 2) %>"></label>
+      <div class="wide form" style="grid-template-columns:repeat(3,1fr)">
+        <label class="f" for="len_cm">Length (cm)<input id="len_cm" name="len_cm" type="number" min="1" max="200" value="<%= v('len_cm') %>"></label>
+        <label class="f" for="wid_cm">Width (cm)<input id="wid_cm" name="wid_cm" type="number" min="1" max="200" value="<%= v('wid_cm') %>"></label>
+        <label class="f" for="hgt_cm">Height (cm)<input id="hgt_cm" name="hgt_cm" type="number" min="1" max="200" value="<%= v('hgt_cm') %>"></label>
+      </div>
+      <div class="wide"><p class="small" style="font-weight:600;margin-bottom:6px">I will ship to</p><div class="row">
+        <label class="check" for="ship_ca"><input id="ship_ca" name="ship_ca" type="checkbox"<%= l.ship_ca ? ' checked' : '' %>>Canada</label>
+        <label class="check" for="ship_us"><input id="ship_us" name="ship_us" type="checkbox"<%= l.ship_us ? ' checked' : '' %>>United States</label>
+        <label class="check" for="ship_intl"><input id="ship_intl" name="ship_intl" type="checkbox"<%= l.ship_intl ? ' checked' : '' %>>Rest of the world</label></div></div>
+      <label class="f wide" for="ship_mode">Shipping cost<select id="ship_mode" name="ship_mode"><option value="calculated"<%= l.ship_mode === 'calculated' ? ' selected' : '' %>>Buyer pays the Canada Post rate for their address</option><option value="flat"<%= l.ship_mode === 'flat' ? ' selected' : '' %>>Flat rates I set</option><option value="free"<%= l.ship_mode === 'free' ? ' selected' : '' %>>Free shipping (I pay)</option></select></label>
+      <div class="wide form" style="grid-template-columns:repeat(3,1fr)" data-ship="flat">
+        <label class="f" for="flat_ca">Canada (CAD)<input id="flat_ca" name="flat_ca" inputmode="decimal" value="<%= v('flat_ca') %>"></label>
+        <label class="f" for="flat_us">United States (CAD)<input id="flat_us" name="flat_us" inputmode="decimal" value="<%= v('flat_us') %>"></label>
+        <label class="f" for="flat_intl">Rest of world (CAD)<input id="flat_intl" name="flat_intl" inputmode="decimal" value="<%= v('flat_intl') %>"></label>
+      </div>
+      <p class="wide small muted">Ships from <%= user.city %>, <%= user.province %> <%= user.postal %>.</p>
+    </fieldset>
+    <div class="row"><button class="btn primary" type="submit"><%= editing ? 'Save changes' : 'List it' %></button><a class="btn" href="/sell/hub">Cancel</a></div>
+  </form>
+</section></div>
+<%- include('partials/foot') %>

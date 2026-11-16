@@ -1,0 +1,37 @@
+<%- include('partials/head') %>
+<div class="wrap">
+  <section class="hero">
+    <h1 style="max-width:18ch">Canadian sellers. Buyers everywhere.</h1>
+    <p class="lead">Canado is the marketplace where every seller is in Canada. Bid or buy from anywhere in the world, shipped by Canada Post. Sellers keep more: one <%= feePct %>% fee when an item sells, and nothing else.</p>
+    <div class="row"><a class="btn primary" href="/search">Shop listings</a><a class="btn" href="/sell">Start selling</a></div>
+  </section>
+  <div class="facts">
+    <div><b>Canadian sellers only</b><span class="small muted">Every seller confirms a Canadian address before listing.</span></div>
+    <div><b>Buyers worldwide</b><span class="small muted">Anyone, in any country, can bid and buy.</span></div>
+    <div><b>Shipped by Canada Post</b><span class="small muted">One carrier, tracked, from every province and territory.</span></div>
+    <div><b><%= feePct %>% when it sells</b><span class="small muted">No listing fees. No subscriptions. No store fees.</span></div>
+  </div>
+
+  <% if (ending.length) { %><section>
+    <div class="rowhead"><h2>Auctions ending soon</h2><a href="/search?format=auction&sort=ending">See all auctions</a></div>
+    <div class="grid"><% ending.forEach(l => { %><%- include('partials/card', { l }) %><% }) %></div>
+  </section><% } %>
+
+  <section>
+    <div class="rowhead"><h2>New listings</h2><% if (fresh.length) { %><a href="/search">Browse all <%= counts.listings %> listings</a><% } %></div>
+    <% if (fresh.length) { %><div class="grid"><% fresh.forEach(l => { %><%- include('partials/card', { l }) %><% }) %></div>
+    <% } else { %><div class="empty">No listings yet. Be the first Canadian seller on Canado.<br><br><a class="btn primary" href="/sell">Create a listing</a></div><% } %>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="rowhead"><h2>Shop by category</h2></div>
+    <div class="row"><% Object.entries(CATEGORIES).forEach(([k, v]) => { %><a class="chip" href="/search?cat=<%= k %>"><%= v %></a><% }) %></div>
+  </section>
+
+  <div class="band">
+    <h2>Selling on eBay from Canada? Keep more of every sale.</h2>
+    <p>Bring your listings over with one file upload. Pay <%= feePct %>% when an item sells and nothing to list. Sell to the same buyers around the world, and get paid in Canadian dollars.</p>
+    <a class="btn primary" href="/switch">See how to switch</a>
+  </div>
+</div>
+<%- include('partials/foot') %>

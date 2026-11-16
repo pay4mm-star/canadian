@@ -1,0 +1,21 @@
+<%- include('partials/head') %>
+<div class="wrap"><section><div class="cols">
+  <form class="panel stack" action="/search" aria-label="Filters">
+    <input type="hidden" name="q" value="<%= f.q %>">
+    <label class="f" for="cat">Category<select id="cat" name="cat"><option value="">All categories</option><% Object.entries(CATEGORIES).forEach(([k, v]) => { %><option value="<%= k %>"<%= f.cat === k ? ' selected' : '' %>><%= v %></option><% }) %></select></label>
+    <label class="f" for="fmt">Format<select id="fmt" name="format"><option value="">Auction and Buy It Now</option><option value="auction"<%= f.format === 'auction' ? ' selected' : '' %>>Auction</option><option value="fixed"<%= f.format === 'fixed' ? ' selected' : '' %>>Buy It Now</option></select></label>
+    <label class="f" for="to">Ships to<select id="to" name="to"><option value="">Anywhere</option><option value="ca"<%= f.to === 'ca' ? ' selected' : '' %>>Canada</option><option value="us"<%= f.to === 'us' ? ' selected' : '' %>>United States</option><option value="intl"<%= f.to === 'intl' ? ' selected' : '' %>>Rest of the world</option></select></label>
+    <label class="f" for="prov">Seller location<select id="prov" name="prov"><option value="">All of Canada</option><% Object.entries(PROVINCES).forEach(([k, v]) => { %><option value="<%= k %>"<%= f.prov === k ? ' selected' : '' %>><%= v %></option><% }) %></select></label>
+    <div class="form"><label class="f" for="min">Min price<input id="min" name="min" inputmode="decimal" value="<%= f.min != null ? (f.min / 100).toFixed(2) : '' %>"></label><label class="f" for="max">Max price<input id="max" name="max" inputmode="decimal" value="<%= f.max != null ? (f.max / 100).toFixed(2) : '' %>"></label></div>
+    <label class="f" for="sort">Sort by<select id="sort" name="sort"><% [['new', 'Newly listed'], ['ending', 'Ending soonest'], ['low', 'Price: low to high'], ['high', 'Price: high to low'], ['bids', 'Most bids']].forEach(o => { %><option value="<%= o[0] %>"<%= f.sort === o[0] ? ' selected' : '' %>><%= o[1] %></option><% }) %></select></label>
+    <button class="btn primary" type="submit">Apply filters</button>
+    <a class="small" href="/search">Clear filters</a>
+  </form>
+  <div>
+    <div class="rowhead"><h1 style="font-size:1.5rem"><%= total %> listing<%= total === 1 ? '' : 's' %><%= f.q ? ' for "' + f.q + '"' : '' %></h1></div>
+    <% if (rows.length) { %><div class="grid"><% rows.forEach(l => { %><%- include('partials/card', { l }) %><% }) %></div>
+      <% if (pages > 1) { %><div class="row" style="margin-top:20px"><% for (let i = 1; i <= Math.min(pages, 20); i++) { %><a class="chip <%= i === page ? 'on' : '' %>" href="/search?<%= qs %><%= qs ? '&' : '' %>page=<%= i %>"><%= i %></a><% } %></div><% } %>
+    <% } else { %><div class="empty">No listings match. Try fewer filters or a different search.</div><% } %>
+  </div>
+</div></section></div>
+<%- include('partials/foot') %>

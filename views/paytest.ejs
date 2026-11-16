@@ -1,0 +1,14 @@
+<%- include('partials/head') %>
+<div class="wrap narrow"><section>
+  <h1>Test payment</h1>
+  <p class="muted" style="margin-top:8px">Stripe is not connected, so this page stands in for the card form. No money moves.</p>
+  <div class="panel" style="margin-top:16px"><div class="lines num">
+    <div><span><%= o.title %><%= o.qty > 1 ? ' × ' + o.qty : '' %></span><span><%= money(o.item_cents) %></span></div>
+    <div><span><%= o.ship_service %></span><span><%= o.ship_cents ? money(o.ship_cents) : 'Free' %></span></div>
+    <% if (o.tax_cents) { %><div><span><%= o.tax_label %></span><span><%= money(o.tax_cents) %></span></div><% } %>
+    <div><b>Total</b><b><%= money(o.total_cents) %></b></div></div>
+    <form method="post" action="/checkout/<%= o.id %>/test" style="margin-top:14px"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn primary block" type="submit">Pay <%= money(o.total_cents) %> (test)</button></form>
+    <p class="small" style="margin-top:10px"><a href="/checkout/<%= o.id %>">Back to shipping options</a></p>
+  </div>
+</section></div>
+<%- include('partials/foot') %>

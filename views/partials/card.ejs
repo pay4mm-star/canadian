@@ -1,0 +1,10 @@
+<article class="card"><a href="/item/<%= l.id %>">
+  <div class="thumb"><% if (l.photo) { %><img src="/uploads/<%= l.photo %>" alt="" loading="lazy"><% } else { %><span aria-hidden="true"><%= l.title.charAt(0).toUpperCase() %></span><% } %></div>
+  <div class="body">
+    <div class="title"><%= l.title %></div>
+    <div class="price num"><%= money(l.current_cents) %></div>
+    <div class="small muted"><% if (l.format === 'auction') { %><span class="tag warn">Auction</span> <%= l.bid_count %> bid<%= l.bid_count === 1 ? '' : 's' %> · <span class="num" data-ends="<%= l.ends_at %>"><%= timeLeft(l.ends_at) %></span><% } else { %><span class="tag good">Buy It Now</span><% if (l.allow_offers) { %> or best offer<% } %><% } %></div>
+    <div class="small muted"><%= l.ship_mode === 'free' ? 'Free shipping' : 'Ships with Canada Post' %> · <%= l.condition %></div>
+  </div></a>
+  <% if (l.seller_city) { %><span class="postmark mono"><%= l.seller_city %>, <%= l.seller_prov %></span><% } %>
+</article>

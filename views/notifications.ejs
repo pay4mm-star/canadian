@@ -1,0 +1,6 @@
+<%- include('partials/head') %>
+<div class="wrap mid"><section><h1>Notifications</h1>
+<% if (rows.length) { %><div class="tablewrap" style="margin-top:16px"><table><tbody><% rows.forEach(n => { %><tr><td><% if (!n.read_at) { %><span class="tag warn">New</span> <% } %><% if (n.link) { %><a href="<%= n.link %>"><%= n.body %></a><% } else { %><%= n.body %><% } %></td><td class="small muted right" style="white-space:nowrap"><%= dateTime(n.created_at) %></td></tr><% }) %></tbody></table></div>
+<% } else { %><div class="empty" style="margin-top:16px">Nothing yet. Bids, sales, payments and shipping updates appear here.</div><% } %>
+</section></div>
+<%- include('partials/foot') %>

@@ -1,0 +1,63 @@
+<%- include('partials/head') %>
+<div class="wrap"><section class="prose">
+<% if (page === 'fees') { %>
+  <h1>Fees and payouts</h1>
+  <p class="muted" style="margin-top:10px">One fee, charged only when something sells.</p>
+  <h2>What sellers pay</h2>
+  <div class="tablewrap"><table><tbody>
+    <tr><td>Listing an item</td><td class="right"><b>Free</b></td></tr>
+    <tr><td>Monthly subscription or store fee</td><td class="right"><b>None</b></td></tr>
+    <tr><td>Final value fee when an item sells</td><td class="right"><b><%= feePct %>%</b> of the item price<%= cfg.feeOnShipping ? ' plus shipping' : '' %></td></tr>
+    <tr><td>Fee on sales tax</td><td class="right"><b>None</b></td></tr>
+  </tbody></table></div>
+  <p style="margin-top:12px">Example: an item sells for $100.00 with $15.00 shipping. The fee is <%= money(Math.round((10000 + (cfg.feeOnShipping ? 1500 : 0)) * cfg.feeBps / 10000)) %> and the seller receives <%= money(11500 - Math.round((10000 + (cfg.feeOnShipping ? 1500 : 0)) * cfg.feeBps / 10000)) %>.</p>
+  <h2>How payment works</h2>
+  <p>The buyer pays Canado at checkout. We hold the payment, take the <%= feePct %>% fee, and pay the rest to the seller. Buyers never pay sellers directly.</p>
+  <h2>When sellers are paid</h2>
+  <ul>
+    <li><b>Established sellers</b> (<%= cfg.newSellerSales %> or more completed sales): funds become available <%= cfg.holdDays %> days after the buyer pays.</li>
+    <li><b>New sellers</b>: funds become available when the buyer confirms delivery, or <%= cfg.newSellerHoldDays %> days after you add Canada Post tracking, whichever comes first.</li>
+    <li>If a buyer opens a case, the funds for that order are frozen until the case is resolved.</li>
+  </ul>
+  <p>Available funds are paid out on the schedule you choose: every day, every week (Tuesdays), every two weeks, or once a month (the 1st). The minimum payout is <%= money(cfg.minPayoutCents) %>.</p>
+  <h2>Sales tax</h2>
+  <p>Orders shipped to a Canadian address include GST, HST, PST or QST for the buyer's province. Orders shipped outside Canada have no Canadian sales tax. If you are registered for GST/HST, the tax we collect on your sales is paid to you to remit. If you are not registered, Canado collects and remits it.</p>
+<% } else if (page === 'shipping') { %>
+  <h1>Shipping with Canada Post</h1>
+  <p class="muted" style="margin-top:10px">Every Canado order ships with Canada Post. One carrier keeps rates predictable and tracking simple.</p>
+  <h2>For buyers</h2>
+  <p>Enter your country and postal or ZIP code on any listing to see the Canada Post services and prices available to you. You choose the service at checkout. Once the seller ships, your order page shows the tracking number.</p>
+  <p>Orders shipped outside Canada may be charged import duties or taxes by your country when they arrive. Those charges are not included in the Canado price.</p>
+  <h2>For sellers</h2>
+  <ul>
+    <li>Enter the packed weight and size on each listing. Buyers are charged the Canada Post rate for their destination, or you can set flat rates or offer free shipping.</li>
+    <li>Choose where you ship: Canada, the United States, the rest of the world, or all three.</li>
+    <li>After the buyer pays, send the parcel with Canada Post and add the tracking number to the order. A customs form is needed for parcels leaving Canada.</li>
+    <li>Tracking protects you: it is your proof of shipment if a buyer opens a case.</li>
+  </ul>
+<% } else if (page === 'switch') { %>
+  <h1>Switch from eBay</h1>
+  <p class="muted" style="margin-top:10px">Canado is built for Canadian sellers who sell to the world. Same formats you know, a fraction of the fee.</p>
+  <h2>What stays the same</h2>
+  <ul><li>Auctions with automatic bidding, Buy It Now, and best offers.</li><li>Buyers in Canada, the United States and around the world.</li><li>Payment collected for you and paid out on a daily, weekly, biweekly or monthly schedule.</li><li>Feedback, messages, watchlists and a seller hub.</li></ul>
+  <h2>What is different</h2>
+  <ul><li><b><%= feePct %>% final value fee.</b> No listing fees, no store subscription, no promoted listing charges.</li><li><b>Canadian sellers only.</b> You are not competing with overseas drop-shippers.</li><li><b>Canada Post only,</b> so every buyer sees the same trusted carrier and tracking.</li><li><b>Canadian dollars.</b> You list, sell and get paid in CAD.</li></ul>
+  <h2>Move your listings in three steps</h2>
+  <ol class="steps">
+    <li><h3>Register as a seller</h3><p class="small muted">Confirm your Canadian address. Add your eBay user ID so buyers can see your history.</p></li>
+    <li><h3>Export from eBay</h3><p class="small muted">In eBay Seller Hub, download your active listings as a CSV file.</p></li>
+    <li><h3>Upload to Canado</h3><p class="small muted">Upload the file in your seller hub. Each row becomes a live listing you can edit.</p></li>
+  </ol>
+  <p style="margin-top:20px"><a class="btn primary" href="/sell">Start selling</a> <a class="btn" href="/sell/import">Import from eBay</a></p>
+<% } else { %>
+  <h1>User agreement</h1>
+  <div class="flash" style="margin:14px 0">Draft. Have a Canadian lawyer review and replace this page before the site opens to the public.</div>
+  <h2>Who can sell</h2><p>Selling is open only to individuals who live in Canada and businesses that operate in Canada, shipping from a Canadian address. Canado may ask for proof and may suspend accounts that do not qualify.</p>
+  <h2>Who can buy</h2><p>Anyone aged 18 or over, in any country Canada Post delivers to.</p>
+  <h2>Payments and fees</h2><p>Buyers pay Canado. Canado deducts the final value fee and pays the seller on the schedule described on the fees page. Canado may hold, freeze or reverse funds when a case is open or a payment is disputed.</p>
+  <h2>Shipping</h2><p>Sellers must ship with Canada Post within the handling time shown on the listing and add a valid tracking number.</p>
+  <h2>Prohibited items</h2><p>Items that are illegal to sell or mail in Canada, counterfeit goods, weapons, drugs, recalled products, and anything Canada Post will not carry may not be listed. Canado may remove listings.</p>
+  <h2>Disputes</h2><p>Buyers can open a case within 30 days of delivery. Canado decides open cases and may refund the buyer from the seller's funds.</p>
+<% } %>
+</section></div>
+<%- include('partials/foot') %>

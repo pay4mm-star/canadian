@@ -1,0 +1,7 @@
+<label class="f wide" for="ship_name">Full name<input id="ship_name" name="ship_name" <%= required ? 'required' : '' %> maxlength="80" value="<%= addr.ship_name || '' %>" autocomplete="name"></label>
+<label class="f wide" for="ship_addr1">Street address<input id="ship_addr1" name="ship_addr1" <%= required ? 'required' : '' %> maxlength="120" value="<%= addr.ship_addr1 || '' %>" autocomplete="address-line1"></label>
+<label class="f wide" for="ship_addr2">Apartment, suite, unit (optional)<input id="ship_addr2" name="ship_addr2" maxlength="120" value="<%= addr.ship_addr2 || '' %>" autocomplete="address-line2"></label>
+<label class="f" for="ship_city">City<input id="ship_city" name="ship_city" <%= required ? 'required' : '' %> maxlength="80" value="<%= addr.ship_city || '' %>" autocomplete="address-level2"></label>
+<label class="f" for="ship_region">Province, state or region<input id="ship_region" name="ship_region" maxlength="60" value="<%= addr.ship_region || '' %>" autocomplete="address-level1"><small>In Canada, use the two-letter code, like ON or QC.</small></label>
+<label class="f" for="ship_postal">Postal or ZIP code<input id="ship_postal" name="ship_postal" maxlength="12" value="<%= addr.ship_postal || '' %>" autocomplete="postal-code"></label>
+<label class="f" for="ship_country">Country<select id="ship_country" name="ship_country"><% Object.entries(COUNTRIES).forEach(([k, v]) => { %><option value="<%= k %>"<%= (addr.ship_country || 'CA') === k ? ' selected' : '' %>><%= v %></option><% }) %></select></label>

@@ -1,0 +1,14 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <div class="row between"><div><h1><%= seller.shop_name %></h1>
+    <p class="muted" style="margin-top:6px"><span class="tag good">Canadian seller</span> <%= seller.city %>, <%= PROVINCES[seller.province] %> · Member since <%= date(seller.created_at) %> · <%= stats.positive != null ? stats.positive + '% positive feedback (' + stats.count + ')' : 'No feedback yet' %> · <%= stats.sales %> completed sale<%= stats.sales === 1 ? '' : 's' %></p></div>
+    <% if (!user || user.id !== seller.id) { %><a class="btn" href="/messages/<%= seller.id %>">Contact seller</a><% } %></div>
+</section>
+<section style="padding-top:0"><div class="rowhead"><h2>Items for sale</h2></div>
+  <% if (listings.length) { %><div class="grid"><% listings.forEach(l => { %><%- include('partials/card', { l }) %><% }) %></div><% } else { %><div class="empty">This seller has nothing listed right now.</div><% } %>
+</section>
+<section style="padding-top:0"><div class="rowhead"><h2>Feedback</h2></div>
+  <% if (feedback.length) { %><div class="tablewrap"><table><tbody><% feedback.forEach(x => { %><tr><td><span class="tag <%= x.rating > 0 ? 'good' : x.rating < 0 ? 'bad' : 'plain' %>"><%= x.rating > 0 ? 'Positive' : x.rating < 0 ? 'Negative' : 'Neutral' %></span></td><td><%= x.comment || 'No comment' %><div class="small muted"><%= x.title %></div></td><td class="small muted"><%= x.name.charAt(0) %>*** · <%= date(x.created_at) %></td></tr><% }) %></tbody></table></div>
+  <% } else { %><div class="empty">No feedback yet.</div><% } %>
+</section></div>
+<%- include('partials/foot') %>

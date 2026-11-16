@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title ? title + ' | Canado' : 'Canado: buy direct from Canadian sellers' %></title>
+<meta name="description" content="Canado is the marketplace where every seller is Canadian and buyers are everywhere. Auctions and fixed price, shipped by Canada Post.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<% if (testMode) { %><div class="notice"><div class="wrap">Test mode: payments are simulated and no money moves. Add Stripe keys to take real payments.</div></div><% } %>
+<header class="top"><div class="wrap">
+  <div class="bar">
+    <a class="logo" href="/" aria-label="Canado home"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M21.5 11.5a7 7 0 1 0 0 9" fill="none" stroke="var(--accent-ink)" stroke-width="3.4" stroke-linecap="round"/></svg>Canado</a>
+    <form class="search" action="/search" role="search">
+      <input type="search" name="q" value="<%= (typeof f !== 'undefined' && f && f.q) || '' %>" placeholder="Search Canadian sellers" aria-label="Search listings">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+  <nav class="main" aria-label="Main">
+    <a href="/search" class="<%= path === '/search' ? 'on' : '' %>">Browse</a>
+    <a href="/sell" class="<%= path.startsWith('/sell') ? 'on' : '' %>">Sell</a>
+    <a href="/switch" class="<%= path === '/switch' ? 'on' : '' %>">Switch from eBay</a>
+    <a href="/fees" class="<%= path === '/fees' ? 'on' : '' %>">Fees</a>
+    <span class="push"></span>
+    <% if (user) { %>
+      <a href="/account" class="<%= path === '/account' ? 'on' : '' %>">My Canado</a>
+      <a href="/messages">Messages<% if (unread.m) { %><span class="count"><%= unread.m %></span><% } %></a>
+      <a href="/notifications">Alerts<% if (unread.n) { %><span class="count"><%= unread.n %></span><% } %></a>
+      <% if (user.role === 'admin') { %><a href="/admin">Admin</a><% } %>
+      <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="linkbtn" type="submit">Sign out</button></form>
+    <% } else { %>
+      <a href="/login">Sign in</a>
+      <a href="/register">Register</a>
+    <% } %>
+  </nav>
+</div></header>
+<main>
+<% if (flash) { %><div class="wrap"><div class="flash <%= flash.kind %>" role="status"><%= flash.msg %></div></div><% } %>

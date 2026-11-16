@@ -1,0 +1,61 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <h1>Admin</h1>
+  <div class="tabs" style="margin-top:14px"><% ['overview', 'sellers', 'listings', 'orders', 'cases', 'payouts', 'users'].forEach(t => { %><a class="chip <%= tab === t ? 'on' : '' %>" href="/admin?tab=<%= t %>"><%= t.charAt(0).toUpperCase() + t.slice(1) %></a><% }) %></div>
+
+  <% if (tab === 'overview') { const s = d.stats; %>
+    <div class="tiles">
+      <div class="tile"><span class="small muted">Sales (item + shipping)</span><b class="num"><%= money(s.gmv) %></b><span class="small muted"><%= s.orders %> paid orders</span></div>
+      <div class="tile"><span class="small muted">Fees earned (<%= feePct %>%)</span><b class="num"><%= money(s.fees) %></b></div>
+      <div class="tile"><span class="small muted">Held for sellers</span><b class="num"><%= money(s.owed_sellers) %></b><span class="small muted">Not Canado's money</span></div>
+      <div class="tile"><span class="small muted">Sales tax to remit</span><b class="num"><%= money(s.tax_owed) %></b><span class="small muted">Collected for unregistered sellers</span></div>
+      <div class="tile"><span class="small muted">Sellers awaiting approval</span><b class="num"><%= s.pending %></b><a class="small" href="/admin?tab=sellers">Review</a></div>
+      <div class="tile"><span class="small muted">Open cases</span><b class="num"><%= s.cases %></b><a class="small" href="/admin?tab=cases">Review</a></div>
+      <div class="tile"><span class="small muted">Payouts to send</span><b class="num"><%= s.payouts_due %></b><a class="small" href="/admin?tab=payouts">Review</a></div>
+      <div class="tile"><span class="small muted">Members / sellers / listings</span><b class="num"><%= s.users %> / <%= s.sellers %> / <%= s.listings %></b></div>
+    </div>
+    <p class="small muted" style="margin-top:14px">Payments: <%= stripeOn ? 'Stripe connected' : 'TEST MODE (no Stripe key)' %> · Canada Post rates: <%= cfg.cp.user && cfg.cp.customer ? 'live API' : 'built-in estimates (no API key)' %></p>
+
+  <% } else if (tab === 'sellers') { %>
+    <div class="tablewrap"><table><thead><tr><th>Shop</th><th>Legal name</th><th>Location</th><th>Contact</th><th>GST/HST</th><th>Status</th><th></th></tr></thead><tbody>
+    <% d.sellers.forEach(u => { %><tr><td><b><%= u.shop_name %></b><% if (u.ebay_user) { %><div class="small muted">eBay: <%= u.ebay_user %></div><% } %></td><td><%= u.legal_name %></td><td><%= u.addr1 %><br><%= u.city %>, <%= u.province %> <%= u.postal %></td><td class="small"><%= u.email %><br><%= u.phone %></td><td class="small mono"><%= u.gst_registered ? u.gst_number : 'Not registered' %></td>
+      <td><span class="tag <%= u.seller_status === 'approved' ? 'good' : u.seller_status === 'pending' ? 'warn' : 'bad' %>"><%= u.seller_status %></span></td>
+      <td class="right" style="white-space:nowrap"><% if (u.seller_status !== 'approved') { %><form method="post" action="/admin/sellers/<%= u.id %>/approve"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm primary" type="submit">Approve</button></form><% } %> <% if (u.seller_status !== 'suspended') { %><form method="post" action="/admin/sellers/<%= u.id %>/suspend"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Suspend</button></form><% } %></td></tr><% }) %>
+    <% if (!d.sellers.length) { %><tr><td colspan="7" class="muted">No seller applications yet.</td></tr><% } %></tbody></table></div>
+
+  <% } else if (tab === 'listings') { %>
+    <div class="tablewrap"><table><thead><tr><th>#</th><th>Listing</th><th>Seller</th><th class="right">Price</th><th>Status</th><th></th></tr></thead><tbody>
+    <% d.listings.forEach(l => { %><tr><td class="mono"><%= l.id %></td><td><a href="/item/<%= l.id %>"><%= l.title %></a></td><td><%= l.shop_name %></td><td class="right num"><%= money(l.current_cents) %></td><td><%= l.status %></td><td class="right"><% if (l.status === 'active') { %><form method="post" action="/admin/listings/<%= l.id %>/remove"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Remove</button></form><% } %></td></tr><% }) %>
+    <% if (!d.listings.length) { %><tr><td colspan="6" class="muted">No listings yet.</td></tr><% } %></tbody></table></div>
+
+  <% } else if (tab === 'orders') { %>
+    <div class="tablewrap"><table><thead><tr><th>Order</th><th>Item</th><th>Buyer</th><th>Seller</th><th class="right">Total</th><th class="right">Fee</th><th>Status</th><th>Funds</th></tr></thead><tbody>
+    <% d.orders.forEach(o => { %><tr><td class="mono"><a href="/orders/<%= o.id %>">#<%= o.id %></a></td><td><%= o.title %></td><td><%= o.buyer_name %></td><td><%= o.shop_name %></td><td class="right num"><%= money(o.total_cents) %></td><td class="right num"><%= money(o.fee_cents) %></td><td><%= STATUS[o.status] %></td><td class="small"><%= FUNDS[o.funds_status] %></td></tr><% }) %>
+    <% if (!d.orders.length) { %><tr><td colspan="8" class="muted">No orders yet.</td></tr><% } %></tbody></table></div>
+
+  <% } else if (tab === 'cases') { %>
+    <div class="tablewrap"><table><thead><tr><th>Case</th><th>Order</th><th>Problem</th><th>Status</th><th></th></tr></thead><tbody>
+    <% d.cases.forEach(c => { %><tr><td class="mono">#<%= c.id %><div class="small muted"><%= date(c.created_at) %></div></td><td><a href="/orders/<%= c.order_id %>">#<%= c.order_id %></a> <%= c.title %><div class="small muted num"><%= money(c.total_cents) %> · opened by <%= c.opener %></div></td><td><b><%= c.reason %></b><div class="small desc"><%= c.detail %></div></td><td><span class="tag <%= c.status === 'open' ? 'bad' : 'plain' %>"><%= c.status %></span><% if (c.resolution) { %><div class="small muted"><%= c.resolution %></div><% } %></td>
+      <td class="right" style="white-space:nowrap"><% if (c.status === 'open') { %><form method="post" action="/admin/cases/<%= c.id %>/refund"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm primary" type="submit">Refund buyer</button></form> <form method="post" action="/admin/cases/<%= c.id %>/release"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Close for seller</button></form><% } %></td></tr><% }) %>
+    <% if (!d.cases.length) { %><tr><td colspan="5" class="muted">No cases.</td></tr><% } %></tbody></table></div>
+
+  <% } else if (tab === 'payouts') { %>
+    <div class="row" style="margin-bottom:14px">
+      <form method="post" action="/admin/payouts/run"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn" type="submit">Run scheduled payouts now</button></form>
+      <form method="post" action="/admin/payouts/run"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="force" value="1"><button class="btn" type="submit">Pay out all available funds</button></form>
+      <span class="small muted">Payouts also run automatically each morning. <%= stripeOn ? 'Sellers with a connected bank are paid through Stripe; the rest appear below to send by e-Transfer.' : 'Send each one by e-Transfer, then mark it sent.' %></span>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>Payout</th><th>Seller</th><th class="right">Amount</th><th>Send to</th><th>Status</th><th></th></tr></thead><tbody>
+    <% d.payouts.forEach(p => { %><tr><td class="mono">#<%= p.id %><div class="small muted"><%= date(p.created_at) %></div></td><td><b><%= p.shop_name %></b><div class="small muted"><%= p.legal_name %></div></td><td class="right num"><b><%= money(p.amount_cents) %></b></td><td class="small"><%= p.method === 'stripe' && p.status === 'sent' ? 'Stripe bank deposit' : (p.payout_details || 'No e-Transfer email on file') %></td>
+      <td><span class="tag <%= p.status === 'sent' ? 'good' : 'warn' %>"><%= p.status %></span><% if (p.reference) { %><div class="small muted mono"><%= p.reference %></div><% } %></td>
+      <td class="right"><% if (p.status !== 'sent') { %><form method="post" action="/admin/payouts/<%= p.id %>/sent" class="row" style="justify-content:flex-end"><input type="hidden" name="_csrf" value="<%= csrf %>"><input class="in" name="reference" placeholder="e-Transfer reference" aria-label="Reference" style="width:170px"><button class="btn sm primary" type="submit">Mark sent</button></form><% } %></td></tr><% }) %>
+    <% if (!d.payouts.length) { %><tr><td colspan="6" class="muted">No payouts yet.</td></tr><% } %></tbody></table></div>
+
+  <% } else { %>
+    <% if (resetLink) { %><div class="flash good">Reset link for <%= resetLink.email %> (valid 24 hours): <span class="mono"><%= resetLink.url %></span></div><% } %>
+    <div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Seller</th><th>Joined</th><th></th></tr></thead><tbody>
+    <% d.users.forEach(u => { %><tr><td class="mono"><%= u.id %></td><td><%= u.name %></td><td><%= u.email %></td><td><%= u.role %></td><td><%= u.seller_status %></td><td><%= date(u.created_at) %></td><td class="right"><form method="post" action="/admin/users/<%= u.id %>/reset"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit">Password reset link</button></form></td></tr><% }) %>
+    </tbody></table></div>
+  <% } %>
+</section></div>
+<%- include('partials/foot') %>

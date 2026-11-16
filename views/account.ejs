@@ -1,0 +1,40 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <div class="rowhead"><h1>My Canado</h1><% if (user.seller_status === 'approved') { %><a class="btn" href="/sell/hub">Seller hub</a><% } else { %><a class="btn" href="/sell">Start selling</a><% } %></div>
+  <div class="tabs"><% [['orders', 'Purchases'], ['bids', 'Bids'], ['offers', 'Offers'], ['watch', 'Watchlist'], ['settings', 'Settings']].forEach(t => { %><a class="chip <%= tab === t[0] ? 'on' : '' %>" href="/account?tab=<%= t[0] %>"><%= t[1] %></a><% }) %></div>
+
+  <% if (tab === 'orders') { %>
+    <% if (orders.length) { %><div class="tablewrap"><table><thead><tr><th>Order</th><th>Item</th><th>Seller</th><th class="right">Total</th><th>Status</th><th></th></tr></thead><tbody>
+      <% orders.forEach(o => { %><tr><td class="mono">#<%= o.id %><div class="small muted"><%= date(o.created_at) %></div></td><td><a href="/orders/<%= o.id %>"><%= o.title %></a></td><td><%= o.shop_name %></td><td class="right num"><%= money(o.total_cents) %></td>
+        <td><span class="tag <%= { awaiting_payment: 'warn', cancelled: 'plain', refunded: 'plain' }[o.status] || 'good' %>"><%= STATUS[o.status] %></span></td>
+        <td class="right"><% if (o.status === 'awaiting_payment') { %><a class="btn sm primary" href="/checkout/<%= o.id %>">Pay now</a><% } else { %><a class="btn sm" href="/orders/<%= o.id %>">View</a><% } %></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty">You have not bought anything yet. <a href="/search">Browse listings</a></div><% } %>
+
+  <% } else if (tab === 'bids') { %>
+    <% if (bids.length) { %><div class="tablewrap"><table><thead><tr><th>Item</th><th class="right">Current price</th><th class="right">Your maximum</th><th>Status</th><th>Ends</th></tr></thead><tbody>
+      <% bids.forEach(l => { const lead = l.high_bidder_id === user.id; %><tr><td><a href="/item/<%= l.id %>"><%= l.title %></a></td><td class="right num"><%= money(l.current_cents) %></td><td class="right num"><%= money(l.my_max) %></td>
+        <td><span class="tag <%= lead ? 'good' : 'bad' %>"><%= isLive(l) ? (lead ? 'Winning' : 'Outbid') : (lead ? 'Won' : 'Lost') %></span></td><td class="num"><%= isLive(l) ? timeLeft(l.ends_at) : date(l.ends_at) %></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty">No bids yet.</div><% } %>
+
+  <% } else if (tab === 'offers') { %>
+    <% if (offers.length) { %><div class="tablewrap"><table><thead><tr><th>Item</th><th class="right">Your offer</th><th>Status</th><th>Sent</th></tr></thead><tbody>
+      <% offers.forEach(o => { %><tr><td><a href="/item/<%= o.listing_id %>"><%= o.title %></a></td><td class="right num"><%= money(o.amount_cents) %></td><td><span class="tag <%= o.status === 'accepted' ? 'good' : o.status === 'pending' ? 'warn' : 'plain' %>"><%= o.status %></span></td><td><%= date(o.created_at) %></td></tr><% }) %>
+    </tbody></table></div><% } else { %><div class="empty">No offers yet.</div><% } %>
+
+  <% } else if (tab === 'watch') { %>
+    <% if (watch.length) { %><div class="grid"><% watch.forEach(l => { %><%- include('partials/card', { l }) %><% }) %></div><% } else { %><div class="empty">Your watchlist is empty. Add items from any listing page.</div><% } %>
+
+  <% } else { %>
+    <form method="post" action="/account/settings" class="panel form mid"><input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label class="f wide" for="name">Display name<input id="name" name="name" required maxlength="60" value="<%= user.name %>"></label>
+      <p class="wide small muted">Signed in as <%= user.email %></p>
+      <h3 class="wide">Default shipping address</h3>
+      <%- include('partials/address', { addr: user, required: false }) %>
+      <h3 class="wide">Change password</h3>
+      <label class="f" for="current_password">Current password<input id="current_password" name="current_password" type="password" autocomplete="current-password"></label>
+      <label class="f" for="new_password">New password<input id="new_password" name="new_password" type="password" minlength="8" autocomplete="new-password"></label>
+      <button class="btn primary wide" type="submit">Save settings</button>
+    </form>
+  <% } %>
+</section></div>
+<%- include('partials/foot') %>

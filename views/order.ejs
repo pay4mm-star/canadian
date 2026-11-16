@@ -1,0 +1,72 @@
+<%- include('partials/head') %>
+<% const mineFb = feedback.find(x => x.from_id === user.id), caseOpen = kase && kase.status === 'open'; %>
+<div class="wrap"><section>
+  <div class="rowhead"><h1>Order #<%= o.id %></h1><span class="tag <%= { awaiting_payment: 'warn', cancelled: 'plain', refunded: 'plain' }[o.status] || 'good' %>"><%= STATUS[o.status] %></span></div>
+  <div class="two">
+    <div class="stack">
+      <div class="panel"><h3><a href="/item/<%= o.listing_id %>"><%= o.title %></a><%= o.qty > 1 ? ' × ' + o.qty : '' %></h3>
+        <div class="lines num" style="margin-top:8px">
+          <div><span>Item</span><span><%= money(o.item_cents) %></span></div>
+          <% if (o.ship_service) { %><div><span><%= o.ship_service %></span><span><%= o.ship_cents ? money(o.ship_cents) : 'Free' %></span></div><% } %>
+          <% if (o.tax_cents) { %><div><span><%= o.tax_label %></span><span><%= money(o.tax_cents) %></span></div><% } %>
+          <div><b>Total paid by buyer</b><b><%= money(o.total_cents) %></b></div>
+          <% if ((o.isSeller || user.role === 'admin') && o.status !== 'awaiting_payment' && o.status !== 'cancelled') { %>
+            <div><span>Canado fee (<%= feePct %>%)</span><span>− <%= money(o.fee_cents) %></span></div>
+            <% if (o.tax_cents && o.tax_remitter === 'platform') { %><div><span>Sales tax collected and remitted by Canado</span><span>− <%= money(o.tax_cents) %></span></div><% } %>
+            <div><b>Seller receives</b><b><%= money(o.net_cents) %></b></div>
+            <div><span>Funds</span><span><span class="tag <%= o.funds_status === 'frozen' ? 'bad' : 'plain' %>"><%= FUNDS[o.funds_status] %></span><% if (o.funds_status === 'held' && o.available_at) { %> until <%= date(o.available_at) %><% } %></span></div>
+            <% if (o.tax_cents && o.tax_remitter === 'seller') { %><div><span class="small muted">Includes <%= money(o.tax_cents) %> of sales tax for you to remit.</span><span></span></div><% } %>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="panel"><h3>Progress</h3><div class="lines small" style="margin-top:8px">
+        <div><span>Ordered</span><span><%= dateTime(o.created_at) %></span></div>
+        <div><span>Paid</span><span><%= o.paid_at ? dateTime(o.paid_at) : 'Not yet' %></span></div>
+        <div><span>Shipped with Canada Post</span><span><%= o.shipped_at ? dateTime(o.shipped_at) : 'Not yet' %></span></div>
+        <% if (o.tracking) { %><div><span>Tracking number</span><span><a class="mono" href="<%= trackingUrl %>" rel="noopener"><%= o.tracking %></a></span></div><% } %>
+        <div><span>Delivered</span><span><%= o.delivered_at ? dateTime(o.delivered_at) : 'Not yet' %></span></div></div>
+      </div>
+
+      <% if (kase) { %><div class="panel"><div class="row between"><h3>Case: <%= kase.reason %></h3><span class="tag <%= caseOpen ? 'bad' : 'plain' %>"><%= kase.status %></span></div>
+        <p class="desc small" style="margin-top:8px"><%= kase.detail %></p><% if (kase.resolution) { %><p class="small muted" style="margin-top:6px">Outcome: <%= kase.resolution %></p><% } %></div><% } %>
+
+      <% if (feedback.length) { %><div class="panel"><h3>Feedback</h3><div class="lines small" style="margin-top:8px"><% feedback.forEach(x => { %><div><span><span class="tag <%= x.rating > 0 ? 'good' : x.rating < 0 ? 'bad' : 'plain' %>"><%= x.rating > 0 ? 'Positive' : x.rating < 0 ? 'Negative' : 'Neutral' %></span> from the <%= x.from_id === o.buyer_id ? 'buyer' : 'seller' %>: <%= x.comment || 'No comment' %></span><span></span></div><% }) %></div></div><% } %>
+    </div>
+
+    <div class="stack">
+      <% if (o.ship_country && (o.isSeller || o.isBuyer || user.role === 'admin')) { %><div class="panel"><h3>Ship to</h3>
+        <p style="margin-top:8px"><%= o.ship_name %><br><%= o.ship_addr1 %><% if (o.ship_addr2) { %>, <%= o.ship_addr2 %><% } %><br><%= o.ship_city %><%= o.ship_region ? ', ' + o.ship_region : '' %> <%= o.ship_postal %><br><%= COUNTRIES[o.ship_country] %></p>
+        <% if (o.isSeller && o.ship_country !== 'CA') { %><p class="small muted" style="margin-top:8px">This parcel leaves Canada. Complete the Canada Post customs form when you buy the label.</p><% } %></div><% } %>
+
+      <div class="panel stack"><h3>What you can do</h3>
+        <% if (o.isBuyer && o.status === 'awaiting_payment') { %><a class="btn primary block" href="/checkout/<%= o.id %>">Pay now</a><% } %>
+        <% if (o.status === 'awaiting_payment' && (o.isBuyer || o.isSeller)) { %><form method="post" action="/orders/<%= o.id %>/cancel"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn block" type="submit">Cancel order</button></form><% } %>
+
+        <% if (o.isSeller && o.status === 'paid') { %><form method="post" action="/orders/<%= o.id %>/ship" class="stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <label class="f" for="tracking">Canada Post tracking number<input id="tracking" name="tracking" required maxlength="40" placeholder="e.g. 1234567890123456"></label>
+          <button class="btn primary" type="submit">Mark as shipped</button></form><% } %>
+
+        <% if (o.isBuyer && o.status === 'shipped') { %><form method="post" action="/orders/<%= o.id %>/received"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn primary block" type="submit">I received my order</button></form><% } %>
+
+        <% if ((o.isSeller || user.role === 'admin') && ['paid', 'shipped', 'delivered'].includes(o.status)) { %><form method="post" action="/orders/<%= o.id %>/refund"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn block" type="submit">Refund the buyer in full</button></form><% } %>
+
+        <a class="btn block" href="/messages/<%= o.isBuyer ? o.seller_id : o.buyer_id %>?item=<%= o.listing_id %>">Message the <%= o.isBuyer ? 'seller' : 'buyer' %></a>
+
+        <% if ((o.isBuyer || o.isSeller) && ['paid', 'shipped', 'delivered', 'refunded'].includes(o.status) && !mineFb) { %><form method="post" action="/orders/<%= o.id %>/feedback" class="stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <h3>Leave feedback for the <%= o.isBuyer ? 'seller' : 'buyer' %></h3>
+          <label class="f" for="rating">Rating<select id="rating" name="rating"><option value="1">Positive</option><option value="0">Neutral</option><option value="-1">Negative</option></select></label>
+          <label class="f" for="comment">Comment<input id="comment" name="comment" maxlength="300"></label>
+          <button class="btn" type="submit">Save feedback</button></form><% } %>
+
+        <% if (o.isBuyer && !caseOpen && (['paid', 'shipped'].includes(o.status) || o.status === 'delivered')) { %><details><summary class="small">Report a problem with this order</summary>
+          <form method="post" action="/orders/<%= o.id %>/case" class="stack" style="margin-top:10px"><input type="hidden" name="_csrf" value="<%= csrf %>">
+            <label class="f" for="reason">What went wrong?<select id="reason" name="reason"><option>Item not received</option><option>Item not as described</option><option>Item arrived damaged</option><option>Other</option></select></label>
+            <label class="f" for="detail">Details<textarea id="detail" name="detail" rows="3" required minlength="10" maxlength="1000"></textarea></label>
+            <button class="btn" type="submit">Open a case</button></form></details><% } %>
+      </div>
+      <p class="small muted">Buyer: <%= buyer.name %> · Seller: <a href="/user/<%= seller.id %>"><%= seller.shop_name %></a></p>
+    </div>
+  </div>
+</section></div>
+<%- include('partials/foot') %>

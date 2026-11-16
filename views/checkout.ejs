@@ -1,0 +1,42 @@
+<%- include('partials/head') %>
+<div class="wrap"><section>
+  <h1>Checkout</h1>
+  <div class="two" style="margin-top:18px">
+    <div class="stack">
+      <% if (editing) { %>
+        <form method="post" action="/checkout/<%= o.id %>/address" class="panel form"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <h3 class="wide">1. Where should it be delivered?</h3>
+          <%- include('partials/address', { addr, required: true }) %>
+          <button class="btn primary wide" type="submit">Continue to shipping</button>
+        </form>
+      <% } else { %>
+        <div class="panel"><div class="row between"><h3>1. Deliver to</h3><a class="small" href="/checkout/<%= o.id %>?edit=1">Change address</a></div>
+          <p style="margin-top:8px"><%= o.ship_name %><br><%= o.ship_addr1 %><% if (o.ship_addr2) { %>, <%= o.ship_addr2 %><% } %><br><%= o.ship_city %><%= o.ship_region ? ', ' + o.ship_region : '' %> <%= o.ship_postal %><br><%= COUNTRIES[o.ship_country] %></p></div>
+        <% if (ship.error || !quotes.length) { %>
+          <div class="flash bad"><%= ship.error || 'No Canada Post service is available for this address.' %> You can change the address or <a href="/messages/<%= seller.id %>?item=<%= l.id %>">message the seller</a>.</div>
+        <% } else { %>
+          <form method="post" action="/checkout/<%= o.id %>/pay" class="panel stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+            <h3>2. Choose a Canada Post service</h3>
+            <% quotes.forEach((q, i) => { %><label class="check" for="svc<%= i %>"><input id="svc<%= i %>" type="radio" name="service" value="<%= q.code %>"<%= i === 0 ? ' checked' : '' %> required>
+              <span style="flex:1"><b><%= q.name %></b><% if (q.days) { %> <span class="muted small">· <%= q.days %> business days after shipping</span><% } %><br>
+              <span class="small muted num">Shipping <%= q.ship_cents ? money(q.ship_cents) : 'free' %><% if (q.tax_cents) { %> · <%= q.tax_label %> <%= money(q.tax_cents) %><% } %></span></span>
+              <b class="num">Total <%= money(q.total_cents) %></b></label><% }) %>
+            <% if (ship.estimated) { %><p class="small muted">Rates shown are Canado estimates for Canada Post services.</p><% } %>
+            <% if (o.ship_country !== 'CA') { %><p class="small muted">No Canadian sales tax applies to this order. <%= COUNTRIES[o.ship_country] %> may charge import duties or taxes on delivery; those are paid by you and are not included.</p><% } %>
+            <button class="btn primary" type="submit"><%= testMode ? 'Continue to test payment' : 'Pay securely' %></button>
+            <p class="small muted">You pay Canado. We hold your payment and release it to the seller after the order ships.</p>
+          </form>
+        <% } %>
+      <% } %>
+    </div>
+    <div class="panel"><h3>Order #<%= o.id %></h3>
+      <div class="lines num" style="margin-top:8px">
+        <div><span><a href="/item/<%= l.id %>"><%= o.title %></a><%= o.qty > 1 ? ' × ' + o.qty : '' %></span><span><%= money(o.item_cents) %></span></div>
+        <div><span>Sold by</span><span><%= seller.shop_name %> · <%= seller.city %>, <%= seller.province %></span></div>
+        <div><span>Shipping and tax</span><span class="muted">Calculated in step 2</span></div>
+      </div>
+      <form method="post" action="/orders/<%= o.id %>/cancel" style="margin-top:12px"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="linkbtn small" type="submit">Cancel this order</button></form>
+    </div>
+  </div>
+</section></div>
+<%- include('partials/foot') %>

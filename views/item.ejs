@@ -1,0 +1,77 @@
+<%- include('partials/head') %>
+<% const live = isLive(l), left = l.quantity - l.sold_qty, canBin = live && (l.format === 'fixed' || (l.bin_cents && !l.bid_count)); %>
+<div class="wrap"><section>
+  <p class="small muted" style="margin-bottom:12px"><a href="/search">All listings</a> / <a href="/search?cat=<%= l.category %>"><%= CATEGORIES[l.category] || 'Other' %></a></p>
+  <div class="two">
+    <div>
+      <div class="gallery">
+        <div class="big"><% if (photos.length) { %><img src="/uploads/<%= photos[0].file %>" alt="<%= l.title %>"><% } else { %><span class="muted">No photo</span><% } %></div>
+        <% if (photos.length > 1) { %><div class="thumbs"><% photos.forEach((p, i) => { %><button type="button" data-src="/uploads/<%= p.file %>" aria-current="<%= i === 0 %>" aria-label="Photo <%= i + 1 %>"><img src="/uploads/<%= p.file %>" alt=""></button><% }) %></div><% } %>
+      </div>
+      <div class="panel" style="margin-top:16px"><h3>Description</h3>
+        <p class="desc" style="margin-top:8px"><%= l.description || 'The seller did not add a description.' %></p>
+        <div class="lines small" style="margin-top:12px"><div><span>Condition</span><span><%= l.condition %></span></div><div><span>Packed weight</span><span><%= (l.weight_g / 1000).toFixed(2) %> kg</span></div><div><span>Ships within</span><span><%= l.handling_days %> business day<%= l.handling_days === 1 ? '' : 's' %> of payment</span></div><div><span>Listing number</span><span class="mono"><%= l.id %></span></div></div>
+      </div>
+      <% if (l.format === 'auction' && bids.length) { %><div class="panel" style="margin-top:16px"><h3>Bid history</h3>
+        <div class="lines small num" style="margin-top:8px"><% bids.forEach(b => { %><div><span><%= b.name.charAt(0) %>***<%= b.name.charAt(b.name.length - 1) %> · <%= dateTime(b.created_at) %></span><span><%= money(b.amount_cents) %></span></div><% }) %></div></div><% } %>
+    </div>
+
+    <div class="stack">
+      <h1 style="font-size:clamp(1.4rem,3vw,1.9rem)"><%= l.title %></h1>
+      <div>
+        <div class="small muted"><%= l.format === 'auction' ? (l.bid_count ? 'Current bid' : 'Starting bid') : 'Price' %></div>
+        <div class="price num" style="font-size:2rem"><%= money(l.current_cents) %></div>
+        <% if (l.format === 'auction') { %><div class="small"><%= l.bid_count %> bid<%= l.bid_count === 1 ? '' : 's' %> · <% if (live) { %>ends in <b class="num" data-ends="<%= l.ends_at %>"><%= timeLeft(l.ends_at) %></b> (<%= dateTime(l.ends_at) %> ET)<% } else { %>ended <%= dateTime(l.ends_at) %><% } %><% if (l.reserve_cents && live) { %> · <span class="tag <%= l.current_cents >= l.reserve_cents && l.bid_count ? 'good' : 'warn' %>"><%= l.current_cents >= l.reserve_cents && l.bid_count ? 'Reserve met' : 'Reserve not met' %></span><% } %></div>
+        <% } else if (live) { %><div class="small muted"><%= left %> available<% if (l.sold_qty) { %> · <%= l.sold_qty %> sold<% } %></div><% } %>
+      </div>
+
+      <% if (!live) { %><div class="flash">This listing has ended<%= l.status === 'sold' ? ' and the item sold' : '' %>.</div>
+      <% } else if (mine) { %><div class="panel row between"><span>This is your listing. <span class="muted small"><%= l.views %> views</span></span><a class="btn sm" href="/sell/edit/<%= l.id %>">Edit listing</a></div>
+      <% } else { %>
+        <% if (l.format === 'auction') { %>
+          <% if (user && l.high_bidder_id === user.id) { %><div class="flash good">You are the highest bidder. Your maximum is <%= money(l.high_max_cents) %>.</div><% } %>
+          <form method="post" action="/item/<%= l.id %>/bid"><input type="hidden" name="_csrf" value="<%= csrf %>">
+            <label class="f" for="amount">Your maximum bid (enter <%= money(minNextBid(l)) %> or more)</label>
+            <div class="inline" style="margin-top:5px"><input id="amount" name="amount" inputmode="decimal" required value="<%= (minNextBid(l) / 100).toFixed(2) %>"><button class="btn primary" type="submit">Place bid</button></div>
+            <p class="small muted" style="margin-top:6px">We bid for you in small steps, only as high as needed, up to your maximum.</p>
+          </form>
+        <% } %>
+        <% if (canBin) { %><form method="post" action="/item/<%= l.id %>/buy" class="stack"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <% if (l.format === 'fixed' && left > 1) { %><label class="f" for="qty" style="max-width:120px">Quantity<input id="qty" name="qty" type="number" min="1" max="<%= left %>" value="1"></label><% } %>
+          <button class="btn <%= l.format === 'fixed' ? 'primary' : '' %> block" type="submit">Buy It Now<%= l.format === 'auction' ? ' for ' + money(l.bin_cents) : '' %></button></form><% } %>
+        <% if (l.allow_offers && !l.bid_count) { %>
+          <% if (myOffer && myOffer.status === 'pending') { %><div class="flash">Your offer of <%= money(myOffer.amount_cents) %> is waiting for the seller.</div>
+          <% } else { %><form method="post" action="/item/<%= l.id %>/offer"><input type="hidden" name="_csrf" value="<%= csrf %>"><label class="f" for="offer">Make an offer</label><div class="inline" style="margin-top:5px"><input id="offer" name="amount" inputmode="decimal" placeholder="Your offer in CAD" required><button class="btn" type="submit">Send offer</button></div></form><% } %>
+        <% } %>
+        <div class="row">
+          <form method="post" action="/item/<%= l.id %>/watch"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn sm" type="submit"><%= watching ? 'Remove from watchlist' : 'Add to watchlist' %></button></form>
+          <a class="btn sm" href="/messages/<%= seller.id %>?item=<%= l.id %>">Ask the seller a question</a>
+        </div>
+      <% } %>
+
+      <div class="panel">
+        <h3>Shipping with Canada Post</h3>
+        <p class="small muted" style="margin:4px 0 10px">Ships from <span class="mono"><%= seller.city %>, <%= seller.province %> <%= (seller.postal || '').slice(0, 3) %></span> to: <%= [l.ship_ca && 'Canada', l.ship_us && 'United States', l.ship_intl && 'worldwide'].filter(Boolean).join(', ') %></p>
+        <form action="/item/<%= l.id %>" class="row">
+          <select class="in" name="country" aria-label="Country" style="flex:2;min-width:140px"><% Object.entries(COUNTRIES).forEach(([k, v]) => { %><option value="<%= k %>"<%= dest.country === k ? ' selected' : '' %>><%= v %></option><% }) %></select>
+          <input class="in" name="postal" value="<%= dest.postal %>" placeholder="Postal / ZIP code" aria-label="Postal or ZIP code" style="flex:1;min-width:110px">
+          <button class="btn sm" type="submit">Get rates</button>
+        </form>
+        <% if (ship) { %>
+          <% if (ship.error) { %><p class="small" style="margin-top:10px;color:var(--bad)"><%= ship.error %></p><% } else { %>
+          <div class="lines num" style="margin-top:10px"><% ship.options.forEach(o => { %><div><span><%= o.name %><% if (o.days) { %> <span class="muted small">· <%= o.days %> business days</span><% } %></span><span><%= o.cents ? money(o.cents) : 'Free' %></span></div><% }) %></div>
+          <% if (ship.estimated) { %><p class="small muted" style="margin-top:6px">Estimated rates. The exact Canada Post rate is confirmed at checkout.</p><% } %>
+          <% } %>
+        <% } else { %><p class="small muted" style="margin-top:10px">Enter your postal or ZIP code to see Canada Post rates.</p><% } %>
+        <p class="small muted" style="margin-top:8px"><%= dest.country === 'CA' ? 'Canadian sales tax is added at checkout based on your province.' : 'No Canadian sales tax on orders shipped outside Canada. Your country may charge import duties or taxes on delivery.' %></p>
+      </div>
+
+      <div class="panel">
+        <div class="row between"><div><a href="/user/<%= seller.id %>"><b><%= seller.shop_name %></b></a> <span class="tag good">Canadian seller</span>
+          <div class="small muted"><%= seller.city %>, <%= PROVINCES[seller.province] %> · <%= stats.positive != null ? stats.positive + '% positive' : 'No feedback yet' %> · <%= stats.sales %> sale<%= stats.sales === 1 ? '' : 's' %></div></div>
+          <a class="btn sm" href="/user/<%= seller.id %>">See other items</a></div>
+      </div>
+    </div>
+  </div>
+</section></div>
+<%- include('partials/foot') %>

@@ -1,0 +1,33 @@
+<%- include('partials/head') %>
+<div class="wrap mid"><section>
+  <h1>Sell on Canado</h1>
+  <p class="muted" style="margin-top:8px">Open to Canadian sellers only. Listing is free. You pay <%= feePct %>% when an item sells, and nothing else.</p>
+  <% if (typeof error !== 'undefined' && error) { %><div class="flash bad" role="alert"><%= error %></div><% } %>
+  <% if (user.seller_status === 'pending') { %>
+    <div class="flash" style="margin-top:16px">Your application for <b><%= user.shop_name %></b> is being reviewed. You will get a notification when you are approved.</div>
+  <% } else if (user.seller_status === 'suspended') { %>
+    <div class="flash bad" style="margin-top:16px">Your selling account is suspended. Contact support.</div>
+  <% } else if (user.seller_status === 'approved') { %>
+    <div class="flash good" style="margin-top:16px">You are approved to sell. <a href="/sell/hub">Go to your seller hub</a></div>
+  <% } else { %>
+  <form method="post" action="/sell/apply" class="panel form" style="margin-top:18px"><input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label class="f" for="legal_name">Legal name or registered business name<input id="legal_name" name="legal_name" required maxlength="100" value="<%= form.legal_name || '' %>"></label>
+    <label class="f" for="shop_name">Shop name shown to buyers<input id="shop_name" name="shop_name" required maxlength="40" value="<%= form.shop_name || '' %>"></label>
+    <label class="f" for="phone">Canadian phone number<input id="phone" name="phone" type="tel" required maxlength="20" value="<%= form.phone || '' %>" placeholder="905 555 0123"></label>
+    <label class="f" for="ebay_user">eBay user ID (optional)<input id="ebay_user" name="ebay_user" maxlength="60" value="<%= form.ebay_user || '' %>"><small>Helps us approve you faster.</small></label>
+    <h3 class="wide">Where you ship from</h3>
+    <label class="f wide" for="addr1">Street address<input id="addr1" name="addr1" required maxlength="120" value="<%= form.addr1 || '' %>"></label>
+    <label class="f" for="city">City or town<input id="city" name="city" required maxlength="80" value="<%= form.city || '' %>"></label>
+    <label class="f" for="province">Province or territory<select id="province" name="province" required><option value="">Choose</option><% Object.entries(PROVINCES).forEach(([k, v]) => { %><option value="<%= k %>"<%= form.province === k ? ' selected' : '' %>><%= v %></option><% }) %></select></label>
+    <label class="f" for="postal">Postal code<input id="postal" name="postal" required maxlength="7" value="<%= form.postal || '' %>" placeholder="L4C 1A1"><small>Used to calculate Canada Post rates.</small></label>
+    <div></div>
+    <h3 class="wide">Sales tax</h3>
+    <label class="check wide" for="gst_registered"><input id="gst_registered" name="gst_registered" type="checkbox"<%= form.gst_registered ? ' checked' : '' %>>I am registered for GST/HST</label>
+    <label class="f" for="gst_number">Business number (if registered)<input id="gst_number" name="gst_number" maxlength="20" value="<%= form.gst_number || '' %>" placeholder="123456789RT0001"></label>
+    <p class="small muted">If you are registered, the tax collected on your sales is paid to you to remit. If not, Canado collects and remits it.</p>
+    <label class="check wide" for="attest"><input id="attest" name="attest" type="checkbox" required>I live in Canada or my business operates in Canada, I will ship every order from Canada with Canada Post, and I accept the <a href="/terms">user agreement</a>.</label>
+    <button class="btn primary wide" type="submit">Apply to sell</button>
+  </form>
+  <% } %>
+</section></div>
+<%- include('partials/foot') %>

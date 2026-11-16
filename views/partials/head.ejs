@@ -8,13 +8,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
 <% if (testMode) { %><div class="notice"><div class="wrap">Test mode: payments are simulated and no money moves. Add Stripe keys to take real payments.</div></div><% } %>
 <header class="top"><div class="wrap">
   <div class="bar">
-    <a class="logo" href="/" aria-label="Canado home"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M21.5 11.5a7 7 0 1 0 0 9" fill="none" stroke="var(--accent-ink)" stroke-width="3.4" stroke-linecap="round"/></svg>Canado</a>
+    <a class="logo" href="/" aria-label="Canado home"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 58,21 68,16 64,44 78,31 82,39 95,36 90,54 97,59 73,77 76,87 53,83 53,98 47,98 47,83 24,87 27,77 3,59 10,54 5,36 18,39 22,31 36,44 32,16 42,21" fill="var(--accent)" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/><path d="M61 44a15 15 0 1 0 0 20" fill="none" stroke="var(--accent-ink)" stroke-width="8.5" stroke-linecap="round"/></svg>Canado</a>
     <form class="search" action="/search" role="search">
       <input type="search" name="q" value="<%= (typeof f !== 'undefined' && f && f.q) || '' %>" placeholder="Search Canadian sellers" aria-label="Search listings">
       <button type="submit">Search</button>
